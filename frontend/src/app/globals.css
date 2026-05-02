@@ -1,0 +1,66 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 240 10% 3.9%;
+    --foreground: 0 0% 98%;
+  }
+
+  * {
+    @apply border-white/10;
+  }
+
+  body {
+    @apply bg-dark text-white;
+    font-feature-settings: "rlig" 1, "calt" 1;
+  }
+
+  /* Scrollbar estilo anime */
+  ::-webkit-scrollbar {
+    width: 6px;
+  }
+  ::-webkit-scrollbar-track {
+    background: #1a1a2e;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: #6C63FF;
+    border-radius: 3px;
+  }
+}
+
+@layer components {
+  /* Card de anime con efecto hover */
+  .anime-card {
+    @apply relative overflow-hidden rounded-xl transition-all duration-300
+           hover:scale-105 hover:shadow-2xl hover:shadow-primary/20 cursor-pointer;
+  }
+
+  /* Badge de estado */
+  .status-badge {
+    @apply inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium;
+  }
+
+  /* Skeleton loader */
+  .skeleton {
+    @apply animate-pulse bg-white/5 rounded-lg;
+    background: linear-gradient(90deg, #ffffff08 25%, #ffffff12 50%, #ffffff08 75%);
+    background-size: 200% 100%;
+    animation: shimmer 1.5s infinite;
+  }
+
+  /* Botón primario */
+  .btn-primary {
+    @apply inline-flex items-center justify-center rounded-lg px-4 py-2 text-sm font-medium
+           bg-primary text-white transition-all duration-200
+           hover:bg-primary-600 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed;
+  }
+
+  /* Input de búsqueda */
+  .search-input {
+    @apply w-full rounded-xl bg-dark-100 border border-white/10 px-4 py-3 text-white
+           placeholder:text-white/40 focus:outline-none focus:border-primary
+           focus:ring-1 focus:ring-primary transition-all duration-200;
+  }
+}
