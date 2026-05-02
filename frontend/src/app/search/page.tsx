@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback, useRef } from "react";
+import { Suspense, useState, useEffect, useCallback, useRef } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { Search, SlidersHorizontal, X, ChevronDown } from "lucide-react";
 import { mediaApi, type SearchParams } from "@/lib/api";
@@ -43,7 +43,7 @@ const STATUSES = [
 
 // ── Componente ─────────────────────────────────────────
 
-export default function SearchPage() {
+function SearchPageContent() {
   const sp = useSearchParams();
   const router = useRouter();
 
@@ -414,5 +414,13 @@ export default function SearchPage() {
         )}
       </main>
     </div>
+  );
+}
+
+export default function SearchPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-dark" />}>
+      <SearchPageContent />
+    </Suspense>
   );
 }

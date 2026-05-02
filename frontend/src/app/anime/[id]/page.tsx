@@ -19,9 +19,10 @@ async function getAnime(id: string) {
 export async function generateMetadata({
   params,
 }: {
-  params: { id: string };
+  params: Promise<{ id: string }>;
 }): Promise<Metadata> {
-  const anime = await getAnime(params.id);
+  const { id } = await params;
+  const anime = await getAnime(id);
   if (!anime) return { title: "Anime no encontrado" };
 
   const title = anime.title.english || anime.title.romaji;
@@ -46,9 +47,10 @@ const PLATFORM_COLORS: Record<string, string> = {
 export default async function AnimePage({
   params,
 }: {
-  params: { id: string };
+  params: Promise<{ id: string }>;
 }) {
-  const anime = await getAnime(params.id);
+  const { id } = await params;
+  const anime = await getAnime(id);
   if (!anime) notFound();
 
   const title = anime.title.english || anime.title.romaji;

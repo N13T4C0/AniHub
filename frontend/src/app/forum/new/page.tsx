@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { Suspense, useState, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { useAuth } from "@/contexts/AuthContext";
@@ -8,7 +8,7 @@ import { forumApi, type ForumCategory } from "@/lib/api";
 import Navbar from "@/components/layout/Navbar";
 import { ChevronLeft, Send, AlertCircle } from "lucide-react";
 
-export default function NewThreadPage() {
+function NewThreadPageContent() {
   const { user, token } = useAuth();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -135,5 +135,13 @@ export default function NewThreadPage() {
         </form>
       </div>
     </div>
+  );
+}
+
+export default function NewThreadPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-dark" />}>
+      <NewThreadPageContent />
+    </Suspense>
   );
 }
