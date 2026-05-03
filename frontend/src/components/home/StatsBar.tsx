@@ -3,10 +3,10 @@
 import { useEffect, useRef, useState } from "react";
 
 const STATS = [
-  { value: 21000, label: "Títulos de anime",  suffix: "+", color: "text-primary" },
-  { value: 95000, label: "Manga y manhwa",    suffix: "+", color: "text-pink-400" },
-  { value: 12,    label: "Temporadas activas",suffix: "",  color: "text-green-400" },
-  { value: 100,   label: "Géneros",           suffix: "+", color: "text-yellow-400" },
+  { value: 21000, label: "Títulos de anime",   suffix: "+", color: "#6C63FF" },
+  { value: 95000, label: "Manga y manhwa",      suffix: "+", color: "#FF5E9F" },
+  { value: 12,    label: "Temporadas activas",  suffix: "",  color: "#4ade80" },
+  { value: 100,   label: "Géneros disponibles", suffix: "+", color: "#facc15" },
 ];
 
 function Counter({ target, suffix, color }: { target: number; suffix: string; color: string }) {
@@ -20,25 +20,25 @@ function Counter({ target, suffix, color }: { target: number; suffix: string; co
     const obs = new IntersectionObserver(([entry]) => {
       if (entry.isIntersecting && !started.current) {
         started.current = true;
-        const duration = 1800;
+        const duration = 1600;
         const start = performance.now();
         function tick(now: number) {
           const p = Math.min((now - start) / duration, 1);
-          const eased = 1 - Math.pow(1 - p, 3); // ease-out-cubic
+          const eased = 1 - Math.pow(1 - p, 3);
           setVal(Math.round(eased * target));
           if (p < 1) requestAnimationFrame(tick);
         }
         requestAnimationFrame(tick);
       }
-    }, { threshold: 0.5 });
+    }, { threshold: 0.4 });
     obs.observe(el);
     return () => obs.disconnect();
   }, [target]);
 
-  const display = val >= 1000 ? `${(val / 1000).toFixed(val % 1000 === 0 ? 0 : 0)}K` : String(val);
+  const display = val >= 1000 ? `${Math.round(val / 1000)}K` : String(val);
 
   return (
-    <span ref={ref} className={`text-3xl font-black font-display ${color}`}>
+    <span ref={ref} className="font-display text-[32px] font-black leading-none" style={{ color }}>
       {display}{suffix}
     </span>
   );
@@ -46,12 +46,16 @@ function Counter({ target, suffix, color }: { target: number; suffix: string; co
 
 export default function StatsBar() {
   return (
-    <div className="border-y border-white/5 bg-dark-100/50 backdrop-blur-sm">
-      <div className="max-w-7xl mx-auto px-6 py-8 grid grid-cols-2 md:grid-cols-4 gap-6">
+    <div style={{
+      borderTop: "1px solid rgba(255,255,255,0.05)",
+      borderBottom: "1px solid rgba(255,255,255,0.05)",
+      background: "linear-gradient(to right, transparent, rgba(108,99,255,0.03), transparent)",
+    }}>
+      <div className="max-w-7xl mx-auto px-6 py-7 grid grid-cols-2 md:grid-cols-4 gap-6">
         {STATS.map((s) => (
-          <div key={s.label} className="text-center">
+          <div key={s.label} className="flex flex-col items-center gap-1.5">
             <Counter target={s.value} suffix={s.suffix} color={s.color} />
-            <p className="text-white/40 text-sm mt-1">{s.label}</p>
+            <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-white/30">{s.label}</p>
           </div>
         ))}
       </div>

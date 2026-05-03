@@ -1,7 +1,6 @@
 import Link from "next/link";
 import {
-  Calendar, TrendingUp, BookOpen, Sparkles, MessageSquare, Play,
-  Zap, Heart, Wand2, Cpu, Skull, Laugh, Trophy, Eye,
+  TrendingUp, BookOpen, Sparkles, MessageSquare, Play,
   ChevronRight,
 } from "lucide-react";
 import { mediaApi, seasonApi } from "@/lib/api";
@@ -9,7 +8,10 @@ import Navbar from "@/components/layout/Navbar";
 import ParticleBackgroundLoader from "@/components/layout/ParticleBackgroundLoader";
 import CinematicHero from "@/components/home/CinematicHero";
 import StatsBar from "@/components/home/StatsBar";
+import GenreCard from "@/components/home/GenreCard";
 import HScrollRow from "@/components/home/HScrollRow";
+import FeaturedCarousel from "@/components/home/FeaturedCarousel";
+import Top10Row from "@/components/home/Top10Row";
 import RecommendationsSection from "@/components/home/RecommendationsSection";
 
 function getCurrentSeason(): { season: string; label: string; year: number } {
@@ -23,15 +25,32 @@ function getCurrentSeason(): { season: string; label: string; year: number } {
   return { season, label, year };
 }
 
+// Covers de AniList para los géneros (IDs conocidos)
 const GENRES = [
-  { genre: "Action",   label: "Acción",    Icon: Zap,    accent: "#ef4444", bg: "rgba(239,68,68,0.08)",   border: "rgba(239,68,68,0.2)"  },
-  { genre: "Romance",  label: "Romance",   Icon: Heart,  accent: "#f472b6", bg: "rgba(244,114,182,0.08)", border: "rgba(244,114,182,0.2)"},
-  { genre: "Fantasy",  label: "Fantasía",  Icon: Wand2,  accent: "#a78bfa", bg: "rgba(167,139,250,0.08)", border: "rgba(167,139,250,0.2)"},
-  { genre: "Sci-Fi",   label: "Ciencia F.", Icon: Cpu,   accent: "#38bdf8", bg: "rgba(56,189,248,0.08)",  border: "rgba(56,189,248,0.2)" },
-  { genre: "Horror",   label: "Terror",    Icon: Skull,  accent: "#f87171", bg: "rgba(248,113,113,0.07)", border: "rgba(248,113,113,0.2)"},
-  { genre: "Comedy",   label: "Comedia",   Icon: Laugh,  accent: "#fbbf24", bg: "rgba(251,191,36,0.08)",  border: "rgba(251,191,36,0.2)" },
-  { genre: "Sports",   label: "Deportes",  Icon: Trophy, accent: "#4ade80", bg: "rgba(74,222,128,0.08)",  border: "rgba(74,222,128,0.2)" },
-  { genre: "Mystery",  label: "Misterio",  Icon: Eye,    accent: "#818cf8", bg: "rgba(129,140,248,0.08)", border: "rgba(129,140,248,0.2)"},
+  {
+    genre: "Action", label: "Acción", accent: "#ef4444",
+    cover: "https://s4.anilist.co/file/anilistcdn/media/anime/cover/large/bx16498-C2BI0HBKJVND.jpg",
+  },
+  {
+    genre: "Romance", label: "Romance", accent: "#f472b6",
+    cover: "https://s4.anilist.co/file/anilistcdn/media/anime/cover/large/bx20665-lhFuSGFFiQGi.jpg",
+  },
+  {
+    genre: "Fantasy", label: "Fantasía", accent: "#a78bfa",
+    cover: "https://s4.anilist.co/file/anilistcdn/media/anime/cover/large/bx97986-db5LTSp.jpg",
+  },
+  {
+    genre: "Sci-Fi", label: "Sci-Fi", accent: "#38bdf8",
+    cover: "https://s4.anilist.co/file/anilistcdn/media/anime/cover/large/bx9253-rl7g.jpg",
+  },
+  {
+    genre: "Mystery", label: "Misterio", accent: "#818cf8",
+    cover: "https://s4.anilist.co/file/anilistcdn/media/anime/cover/large/bx101291-RnWx2xb6ga.jpg",
+  },
+  {
+    genre: "Comedy", label: "Comedia", accent: "#fbbf24",
+    cover: "https://s4.anilist.co/file/anilistcdn/media/anime/cover/large/bx21-YcayjAmj9bre.jpg",
+  },
 ];
 
 export default async function HomePage() {
@@ -47,206 +66,197 @@ export default async function HomePage() {
   const manga    = popularManga.status  === "fulfilled" ? popularManga.value.items  : [];
   const seasonal = seasonAnime.status   === "fulfilled" ? seasonAnime.value.items   : [];
 
-  // Items with banner for the cinematic hero
   const heroItems = anime.filter((a) => a.banner_image).slice(0, 6);
 
   return (
     <div className="min-h-screen bg-dark">
       <ParticleBackgroundLoader />
 
-      {/* Navbar overlaid on hero */}
       <div className="absolute top-0 left-0 right-0 z-50">
         <Navbar />
       </div>
 
-      {/* Cinematic hero with Three.js particles */}
+      {/* ── HERO (no tocar) ── */}
       <CinematicHero bannerItems={heroItems} />
 
-      {/* Animated stats */}
+      {/* Stats */}
       <StatsBar />
 
-      {/* ── Cards section with ambient background ── */}
+      {/* ── Contenido ── */}
       <div className="relative">
-        {/* Ambient glow blobs */}
+        {/* Ambient blobs */}
         <div className="pointer-events-none absolute inset-0 overflow-hidden" aria-hidden="true">
-          <div style={{
-            position: "absolute", top: "5%", left: "10%",
-            width: 600, height: 600,
+          <div style={{ position: "absolute", top: "5%", left: "8%", width: 700, height: 700,
             background: "radial-gradient(circle, rgba(108,99,255,0.06) 0%, transparent 70%)",
-            borderRadius: "50%", filter: "blur(40px)",
-          }} />
-          <div style={{
-            position: "absolute", top: "35%", right: "5%",
-            width: 500, height: 500,
-            background: "radial-gradient(circle, rgba(236,72,153,0.05) 0%, transparent 70%)",
-            borderRadius: "50%", filter: "blur(40px)",
-          }} />
-          <div style={{
-            position: "absolute", top: "65%", left: "30%",
-            width: 700, height: 400,
+            borderRadius: "50%", filter: "blur(50px)" }} />
+          <div style={{ position: "absolute", top: "30%", right: "5%", width: 600, height: 600,
+            background: "radial-gradient(circle, rgba(255,94,159,0.05) 0%, transparent 70%)",
+            borderRadius: "50%", filter: "blur(50px)" }} />
+          <div style={{ position: "absolute", top: "65%", left: "25%", width: 800, height: 400,
             background: "radial-gradient(circle, rgba(167,139,250,0.04) 0%, transparent 70%)",
-            borderRadius: "50%", filter: "blur(50px)",
-          }} />
-          {/* Dot grid overlay */}
-          <div style={{
-            position: "absolute", inset: 0,
-            backgroundImage: "radial-gradient(circle, rgba(255,255,255,0.03) 1px, transparent 1px)",
-            backgroundSize: "32px 32px",
-          }} />
+            borderRadius: "50%", filter: "blur(60px)" }} />
+          <div style={{ position: "absolute", inset: 0,
+            backgroundImage: "radial-gradient(circle, rgba(255,255,255,0.025) 1px, transparent 1px)",
+            backgroundSize: "40px 40px" }} />
         </div>
 
-      {/* Seasonal anime */}
-      {seasonal.length > 0 && (
-        <HScrollRow
-          title={`${seasonLabel} ${seasonYear}`}
-          subtitle="Temporada actual en emisión"
-          icon={<Calendar size={16} className="text-green-400" />}
-          items={seasonal}
-          viewAllHref="/season"
-          accentColor="text-green-400"
-        />
-      )}
+        {/* 1 — Top 10 */}
+        {anime.length >= 10 && <Top10Row items={anime} />}
 
-      {/* Trending anime */}
-      {anime.length > 0 && (
-        <HScrollRow
-          title="Anime en tendencia"
-          subtitle="Las series más vistas ahora mismo"
-          icon={<TrendingUp size={16} className="text-primary" />}
-          items={anime}
-          viewAllHref="/search?type=ANIME&status=RELEASING"
-          accentColor="text-primary"
-        />
-      )}
-
-      {/* Popular manga */}
-      {manga.length > 0 && (
-        <HScrollRow
-          title="Manga popular"
-          subtitle="Incluye manhwa y manhua"
-          icon={<BookOpen size={16} className="text-pink-400" />}
-          items={manga}
-          viewAllHref="/search?type=MANGA"
-          accentColor="text-pink-400"
-        />
-      )}
-
-      {/* Genre grid */}
-      <section className="max-w-7xl mx-auto px-6 py-12">
-        <div className="flex items-center justify-between mb-8">
-          <div>
-            <h2 className="font-display text-2xl font-bold text-white">Explorar por género</h2>
-            <p className="text-white/35 text-sm mt-1">Encuentra exactamente lo que buscas</p>
-          </div>
-          <Link href="/search" className="hidden sm:flex items-center gap-1 text-sm text-white/40 hover:text-white transition-colors">
-            Ver todos <ChevronRight size={14} />
-          </Link>
+        <div className="max-w-7xl mx-auto px-6">
+          <div style={{ height: 1, background: "linear-gradient(to right, transparent, rgba(255,255,255,0.06), transparent)" }} />
         </div>
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-          {GENRES.map(({ genre, label, Icon, accent, bg, border }) => (
-            <Link
-              key={genre}
-              href={`/search?genre=${genre}`}
-              className="group relative rounded-2xl p-5 transition-all duration-300 overflow-hidden"
-              style={{
-                background: bg,
-                border: `1px solid ${border}`,
-              }}
-            >
-              {/* Hover glow */}
+
+        {/* 2 — Temporada: Featured layout */}
+        {seasonal.length > 0 && (
+          <FeaturedCarousel
+            items={seasonal}
+            title={`${seasonLabel} ${seasonYear}`}
+            subtitle="Temporada actual en emisión"
+            eyebrow="En antena"
+            accentColor="#4ade80"
+            viewAllHref="/season"
+          />
+        )}
+
+        <div className="max-w-7xl mx-auto px-6">
+          <div style={{ height: 1, background: "linear-gradient(to right, transparent, rgba(255,255,255,0.06), transparent)" }} />
+        </div>
+
+        {/* 3 — Géneros: tiles con imagen */}
+        <section className="max-w-7xl mx-auto px-6 py-14">
+          <div className="flex items-end justify-between mb-8">
+            <div className="flex items-center gap-4">
               <div
-                className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-2xl"
-                style={{ background: `radial-gradient(ellipse at 20% 50%, ${bg.replace("0.08", "0.18")}, transparent 70%)` }}
-              />
-              {/* Icon */}
-              <div
-                className="w-10 h-10 rounded-xl flex items-center justify-center mb-4 transition-transform duration-300 group-hover:scale-110"
-                style={{ background: `${accent}18`, border: `1px solid ${accent}30` }}
+                className="w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0"
+                style={{ background: "rgba(167,139,250,0.12)", border: "1px solid rgba(167,139,250,0.25)" }}
               >
-                <Icon size={18} style={{ color: accent }} />
+                <Sparkles size={16} className="text-violet-400" />
               </div>
-              {/* Label */}
-              <p className="font-bold text-white/80 group-hover:text-white transition-colors text-sm">{label}</p>
-              {/* Arrow */}
-              <div
-                className="absolute bottom-4 right-4 opacity-0 group-hover:opacity-100 transition-all duration-300 translate-x-1 group-hover:translate-x-0"
-                style={{ color: accent }}
-              >
-                <ChevronRight size={16} />
+              <div>
+                <p className="text-[11px] font-bold uppercase tracking-[0.14em] mb-1 text-violet-400">Explorar</p>
+                <h2 className="font-display text-[28px] font-bold text-white leading-none">Por género</h2>
+                <p className="text-white/35 text-[13px] mt-1.5">Encuentra exactamente lo que buscas</p>
               </div>
-              {/* Bottom accent line */}
-              <div
-                className="absolute bottom-0 left-0 right-0 h-px opacity-0 group-hover:opacity-100 transition-opacity duration-300"
-                style={{ background: `linear-gradient(to right, transparent, ${accent}60, transparent)` }}
-              />
+            </div>
+            <Link href="/search" className="hidden sm:flex items-center gap-1 text-sm font-semibold text-violet-400 hover:opacity-70 transition-opacity">
+              Ver todos <ChevronRight size={14} />
             </Link>
-          ))}
+          </div>
+
+          <div className="grid grid-cols-3 sm:grid-cols-6 gap-3">
+            {GENRES.map(({ genre, label, accent, cover }) => (
+              <GenreCard
+                key={genre}
+                genre={genre}
+                label={label}
+                accent={accent}
+                cover={cover}
+              />
+            ))}
+          </div>
+        </section>
+
+        <div className="max-w-7xl mx-auto px-6">
+          <div style={{ height: 1, background: "linear-gradient(to right, transparent, rgba(255,255,255,0.06), transparent)" }} />
         </div>
-      </section>
 
-      {/* Personalized recommendations */}
-      <RecommendationsSection />
+        {/* 4 — Trending anime */}
+        {anime.length > 0 && (
+          <HScrollRow
+            title="Anime en tendencia"
+            subtitle="Las series más vistas ahora mismo"
+            eyebrow="Trending"
+            icon={<TrendingUp size={16} className="text-primary" />}
+            items={anime}
+            viewAllHref="/search?type=ANIME&status=RELEASING"
+            accentColor="text-primary"
+          />
+        )}
 
-      {/* Quick links strip */}
-      <section className="max-w-7xl mx-auto px-6 py-6">
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-          <Link href="/playlist" className="flex items-center gap-4 bg-gradient-to-r from-violet-900/30 to-pink-900/20 border border-violet-500/15 hover:border-violet-500/35 rounded-2xl p-5 transition-all group">
-            <div className="w-10 h-10 rounded-xl bg-violet-500/20 flex items-center justify-center flex-shrink-0">
-              <Sparkles size={18} className="text-violet-400" />
-            </div>
-            <div>
-              <p className="font-semibold text-white text-sm group-hover:text-violet-300 transition-colors">Generador de Playlist</p>
-              <p className="text-xs text-white/35 mt-0.5">Tu lista personalizada en segundos</p>
-            </div>
-          </Link>
-          <Link href="/forum" className="flex items-center gap-4 bg-gradient-to-r from-blue-900/30 to-indigo-900/20 border border-blue-500/15 hover:border-blue-500/35 rounded-2xl p-5 transition-all group">
-            <div className="w-10 h-10 rounded-xl bg-blue-500/20 flex items-center justify-center flex-shrink-0">
-              <MessageSquare size={18} className="text-blue-400" />
-            </div>
-            <div>
-              <p className="font-semibold text-white text-sm group-hover:text-blue-300 transition-colors">Foro de la comunidad</p>
-              <p className="text-xs text-white/35 mt-0.5">Debates, recomendaciones y más</p>
-            </div>
-          </Link>
-          <Link href="/season" className="flex items-center gap-4 bg-gradient-to-r from-green-900/30 to-emerald-900/20 border border-green-500/15 hover:border-green-500/35 rounded-2xl p-5 transition-all group">
-            <div className="w-10 h-10 rounded-xl bg-green-500/20 flex items-center justify-center flex-shrink-0">
-              <Play size={18} className="text-green-400" />
-            </div>
-            <div>
-              <p className="font-semibold text-white text-sm group-hover:text-green-300 transition-colors">Calendario de temporada</p>
-              <p className="text-xs text-white/35 mt-0.5">Toda la temporada actual</p>
-            </div>
-          </Link>
+        <div className="max-w-7xl mx-auto px-6">
+          <div style={{ height: 1, background: "linear-gradient(to right, transparent, rgba(255,255,255,0.06), transparent)" }} />
         </div>
-      </section>
 
-      {/* CTA */}
-      <section className="max-w-7xl mx-auto px-6 py-12">
-        <div className="relative rounded-3xl overflow-hidden border border-white/8 p-12 text-center">
-          <div className="absolute inset-0 bg-gradient-to-br from-primary/15 via-violet-500/8 to-pink-500/10" />
-          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(168,85,247,0.15),transparent_70%)]" />
-          <div className="relative z-10">
-            <p className="text-primary text-sm font-medium mb-3 tracking-widest uppercase">Únete gratis</p>
-            <h2 className="font-display text-3xl md:text-4xl font-black text-white mb-3 leading-tight">
-              Guarda tu progreso.<br />
-              <span className="bg-gradient-to-r from-primary to-pink-400 bg-clip-text text-transparent">Comparte tu pasión.</span>
-            </h2>
-            <p className="text-white/45 mb-8 max-w-md mx-auto">
-              Crea listas, escribe reseñas y conecta con miles de otakus en un solo lugar.
-            </p>
-            <div className="flex flex-col sm:flex-row gap-3 justify-center">
-              <Link href="/auth/register" className="btn-primary px-8 py-3 text-sm font-semibold">
-                Crear cuenta gratis →
-              </Link>
-              <Link href="/search" className="px-8 py-3 text-sm font-semibold border border-white/15 hover:border-white/30 rounded-xl text-white/60 hover:text-white transition-all">
-                Explorar sin registrarse
-              </Link>
+        {/* 5 — Manga popular */}
+        {manga.length > 0 && (
+          <HScrollRow
+            title="Manga popular"
+            subtitle="Incluye manhwa y manhua"
+            eyebrow="Destacado"
+            icon={<BookOpen size={16} className="text-pink-400" />}
+            items={manga}
+            viewAllHref="/search?type=MANGA"
+            accentColor="text-pink-400"
+          />
+        )}
+
+        <div className="max-w-7xl mx-auto px-6">
+          <div style={{ height: 1, background: "linear-gradient(to right, transparent, rgba(255,255,255,0.06), transparent)" }} />
+        </div>
+
+        {/* 6 — Recomendaciones */}
+        <RecommendationsSection />
+
+        {/* 7 — Quick links */}
+        <section className="max-w-7xl mx-auto px-6 py-6">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <Link href="/playlist" className="flex items-center gap-4 bg-gradient-to-r from-violet-900/30 to-pink-900/20 border border-violet-500/15 hover:border-violet-500/35 rounded-2xl p-5 transition-all group">
+              <div className="w-10 h-10 rounded-xl bg-violet-500/20 flex items-center justify-center flex-shrink-0">
+                <Sparkles size={18} className="text-violet-400" />
+              </div>
+              <div>
+                <p className="font-semibold text-white text-sm group-hover:text-violet-300 transition-colors">Generador de Playlist</p>
+                <p className="text-xs text-white/35 mt-0.5">Tu lista personalizada en segundos</p>
+              </div>
+            </Link>
+            <Link href="/forum" className="flex items-center gap-4 bg-gradient-to-r from-blue-900/30 to-indigo-900/20 border border-blue-500/15 hover:border-blue-500/35 rounded-2xl p-5 transition-all group">
+              <div className="w-10 h-10 rounded-xl bg-blue-500/20 flex items-center justify-center flex-shrink-0">
+                <MessageSquare size={18} className="text-blue-400" />
+              </div>
+              <div>
+                <p className="font-semibold text-white text-sm group-hover:text-blue-300 transition-colors">Foro de la comunidad</p>
+                <p className="text-xs text-white/35 mt-0.5">Debates, recomendaciones y más</p>
+              </div>
+            </Link>
+            <Link href="/season" className="flex items-center gap-4 bg-gradient-to-r from-green-900/30 to-emerald-900/20 border border-green-500/15 hover:border-green-500/35 rounded-2xl p-5 transition-all group">
+              <div className="w-10 h-10 rounded-xl bg-green-500/20 flex items-center justify-center flex-shrink-0">
+                <Play size={18} className="text-green-400" />
+              </div>
+              <div>
+                <p className="font-semibold text-white text-sm group-hover:text-green-300 transition-colors">Calendario de temporada</p>
+                <p className="text-xs text-white/35 mt-0.5">Toda la temporada actual</p>
+              </div>
+            </Link>
+          </div>
+        </section>
+
+        {/* 8 — CTA */}
+        <section className="max-w-7xl mx-auto px-6 py-12">
+          <div className="relative rounded-3xl overflow-hidden border border-white/8 p-12 text-center">
+            <div className="absolute inset-0 bg-gradient-to-br from-primary/15 via-violet-500/8 to-pink-500/10" />
+            <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(108,99,255,0.18),transparent_70%)]" />
+            <div className="relative z-10">
+              <p className="text-primary text-sm font-bold mb-3 tracking-widest uppercase">Únete gratis</p>
+              <h2 className="font-display text-3xl md:text-4xl font-black text-white mb-3 leading-tight">
+                Guarda tu progreso.<br />
+                <span className="bg-gradient-to-r from-primary to-pink-400 bg-clip-text text-transparent">Comparte tu pasión.</span>
+              </h2>
+              <p className="text-white/45 mb-8 max-w-md mx-auto">
+                Crea listas, escribe reseñas y conecta con miles de otakus en un solo lugar.
+              </p>
+              <div className="flex flex-col sm:flex-row gap-3 justify-center">
+                <Link href="/auth/register" className="btn-primary px-8 py-3 text-sm font-semibold">
+                  Crear cuenta gratis →
+                </Link>
+                <Link href="/search" className="px-8 py-3 text-sm font-semibold border border-white/15 hover:border-white/30 rounded-xl text-white/60 hover:text-white transition-all">
+                  Explorar sin registrarse
+                </Link>
+              </div>
             </div>
           </div>
-        </div>
-      </section>
-
-      </div>{/* end cards section */}
+        </section>
+      </div>
 
       {/* Footer */}
       <footer className="border-t border-white/5 px-6 py-8">
