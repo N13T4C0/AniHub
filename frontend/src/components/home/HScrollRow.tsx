@@ -143,19 +143,14 @@ export default function HScrollRow({
   viewAllHref: string;
   accentColor?: string;
 }) {
+  // CSS equivalente a max-w-7xl mx-auto px-6 — sin JS, sin flash SSR
+  const EDGE_PAD = "max(24px, calc((100vw - 1280px) / 2 + 24px))";
+
   const trackRef = useRef<HTMLDivElement>(null);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const [canPrev, setCanPrev] = useState(false);
   const [canNext, setCanNext] = useState(true);
   const [isPaused, setIsPaused] = useState(false);
-  const [leftPad, setLeftPad] = useState(24);
-
-  useEffect(() => {
-    const calc = () => setLeftPad(Math.max(24, (window.innerWidth - 1280) / 2 + 24));
-    calc();
-    window.addEventListener("resize", calc);
-    return () => window.removeEventListener("resize", calc);
-  }, []);
 
   const updateArrows = useCallback(() => {
     const el = trackRef.current;
@@ -268,11 +263,10 @@ export default function HScrollRow({
           ref={trackRef}
           onScroll={updateArrows}
           className="flex overflow-x-auto"
-          suppressHydrationWarning
           style={{
             gap: CARD_GAP,
-            paddingLeft: leftPad,
-            paddingRight: leftPad,
+            paddingLeft: EDGE_PAD,
+            paddingRight: EDGE_PAD,
             scrollSnapType: "x mandatory",
             scrollbarWidth: "none",
             msOverflowStyle: "none",

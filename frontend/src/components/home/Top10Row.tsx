@@ -1,6 +1,5 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Flame, Star } from "lucide-react";
 import type { MediaBase } from "@/types/media";
@@ -10,16 +9,10 @@ const CARD_W = 150;
 const CARD_H = 210;
 const CARD_GAP = 12;
 
+// Padding CSS equivalente a max-w-7xl mx-auto px-6 (1280px container)
+const EDGE_PAD = "max(24px, calc((100vw - 1280px) / 2 + 24px))";
+
 export default function Top10Row({ items }: { items: MediaBase[] }) {
-  const [pad, setPad] = useState(24);
-
-  useEffect(() => {
-    const calc = () => setPad(Math.max(24, (window.innerWidth - 1280) / 2 + 24));
-    calc();
-    window.addEventListener("resize", calc);
-    return () => window.removeEventListener("resize", calc);
-  }, []);
-
   if (!items.length) return null;
   const top10 = items.slice(0, 10);
 
@@ -46,13 +39,12 @@ export default function Top10Row({ items }: { items: MediaBase[] }) {
 
       {/* Track */}
       <div
-        suppressHydrationWarning
         style={{
           display: "flex",
           overflowX: "auto",
           overflowY: "visible",
           gap: CARD_GAP,
-          paddingLeft: pad,
+          paddingLeft: EDGE_PAD,
           paddingBottom: 8,
           scrollbarWidth: "none",
           msOverflowStyle: "none",
@@ -148,7 +140,7 @@ export default function Top10Row({ items }: { items: MediaBase[] }) {
           );
         })}
                 {/* Spacer para right padding en scroll containers */}
-        <div style={{ flexShrink: 0, width: pad }} />
+        <div style={{ flexShrink: 0, width: 24 }} />
       </div>
     </section>
   );

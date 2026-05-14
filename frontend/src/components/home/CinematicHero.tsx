@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import Link from "next/link";
 import { Search, Star, Play, ChevronLeft, ChevronRight, ArrowDown } from "lucide-react";
 import dynamic from "next/dynamic";
@@ -10,22 +10,72 @@ import { getTitle } from "@/types/media";
 const HeroScene = dynamic(() => import("./HeroScene"), { ssr: false });
 
 const QUICK_GENRES = ["Action", "Romance", "Fantasy", "Sci-Fi", "Horror", "Isekai"];
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
 export default function CinematicHero({ bannerItems }: { bannerItems: MediaBase[] }) {
+  // Pool mutable de items con banner — se va extendiendo con nuevos fetch
+  const [items, setItems] = useState<MediaBase[]>(() =>
+    bannerItems.filter((b) => b.banner_image)
+  );
   const [activeIdx, setActiveIdx] = useState(0);
   const [fading, setFading] = useState(false);
 
-  const items = bannerItems.filter((b) => b.banner_image);
+  // Control de páginas ya cargadas y estado de fetch
+  const nextPage = useRef(2);
+  const isFetching = useRef(false);
+
   const current = items[activeIdx];
 
-  const goTo = useCallback((idx: number) => {
-    setFading(true);
-    setTimeout(() => {
-      setActiveIdx((idx + items.length) % items.length);
-      setFading(false);
-    }, 500);
-  }, [items.length]);
+  // ── Fetch de más items cuando nos acercamos al final ──────────────────
+  const fetchMore = useCallback(async () => {
+    if (isFetching.current) return;
+    isFetching.current = true;
+    try {
+      const res = await fetch(
+        `${API_BASE}/api/v1/media/trending?page=${nextPage.current}&per_page=18`,
+        { cache: "no-store" }
+      );
+      if (!res.ok) return;
+      const data = await res.json();
+      const newBanners: MediaBase[] = (data.items ?? []).filter(
+        (a: MediaBase) => a.banner_image
+      );
+      if (newBanners.length > 0) {
+        setItems((prev) => {
+          // Evitar duplicados por id
+          const existingIds = new Set(prev.map((i) => i.id));
+          return [...prev, ...newBanners.filter((a) => !existingIds.has(a.id))];
+        });
+        nextPage.current += 1;
+      }
+    } catch {
+      // silencioso — el carrusel sigue con lo que tiene
+    } finally {
+      isFetching.current = false;
+    }
+  }, []);
 
+  // ── Prefetch cuando quedan ≤ 3 items por ver ──────────────────────────
+  useEffect(() => {
+    const remaining = items.length - activeIdx;
+    if (remaining <= 3) {
+      fetchMore();
+    }
+  }, [activeIdx, items.length, fetchMore]);
+
+  // ── Navegación con wrap circular ──────────────────────────────────────
+  const goTo = useCallback(
+    (idx: number) => {
+      setFading(true);
+      setTimeout(() => {
+        setActiveIdx((idx + items.length) % items.length);
+        setFading(false);
+      }, 500);
+    },
+    [items.length]
+  );
+
+  // ── Autoplay cada 8 s ─────────────────────────────────────────────────
   useEffect(() => {
     if (items.length < 2) return;
     const id = setInterval(() => goTo(activeIdx + 1), 8000);
@@ -55,13 +105,9 @@ export default function CinematicHero({ bannerItems }: { bannerItems: MediaBase[
       ))}
 
       {/* ── Layered overlays ── */}
-      {/* Strong dark at bottom for text */}
       <div className="absolute inset-0 bg-gradient-to-t from-dark from-20% via-dark/50 to-transparent" style={{ zIndex: 2 }} />
-      {/* Left vignette for text readability */}
       <div className="absolute inset-0 bg-gradient-to-r from-dark/90 via-dark/40 to-transparent" style={{ zIndex: 2 }} />
-      {/* Top gradient for navbar */}
       <div className="absolute inset-x-0 top-0 h-40 bg-gradient-to-b from-dark/80 to-transparent" style={{ zIndex: 2 }} />
-      {/* Subtle color tint from cover */}
       {current?.cover_image?.color && (
         <div
           className="absolute inset-0 opacity-15 transition-opacity duration-700"
@@ -80,13 +126,11 @@ export default function CinematicHero({ bannerItems }: { bannerItems: MediaBase[
 
           {/* Left: Title + search */}
           <div className="lg:col-span-3">
-            {/* Platform badge */}
             <div className="inline-flex items-center gap-2 rounded-full bg-white/10 backdrop-blur-md border border-white/15 px-4 py-1.5 text-xs text-white/70 mb-6">
               <span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
               Anime · Manga · Manhwa
             </div>
 
-            {/* Main title */}
             <h1 className="font-display font-black leading-none tracking-tight mb-6">
               <span className="block text-7xl md:text-8xl bg-gradient-to-br from-white via-white/95 to-white/50 bg-clip-text text-transparent drop-shadow-2xl">
                 Descubre.
@@ -99,7 +143,6 @@ export default function CinematicHero({ bannerItems }: { bannerItems: MediaBase[
               </span>
             </h1>
 
-            {/* Search */}
             <Link href="/search" className="block max-w-xl mb-5">
               <div className="flex items-center gap-3 bg-dark/60 backdrop-blur-xl border border-white/20 hover:border-primary/60 rounded-2xl px-5 py-4 transition-all duration-200 group cursor-text shadow-2xl">
                 <Search size={18} className="text-white/50 group-hover:text-primary transition-colors flex-shrink-0" />
@@ -112,7 +155,6 @@ export default function CinematicHero({ bannerItems }: { bannerItems: MediaBase[
               </div>
             </Link>
 
-            {/* Genre pills */}
             <div className="flex flex-wrap gap-2">
               {QUICK_GENRES.map((g) => (
                 <Link key={g} href={`/search?genre=${g}`}
@@ -141,19 +183,11 @@ export default function CinematicHero({ bannerItems }: { bannerItems: MediaBase[
                   />
                 )}
 
-                {/* Carta trasera — más rotada, casi invisible */}
+                {/* Carta trasera */}
                 {items.length > 2 && items[(activeIdx + 2) % items.length]?.cover_image?.large && (
                   <div
                     className="absolute rounded-xl overflow-hidden border border-white/8 shadow-lg transition-all duration-700"
-                    style={{
-                      width: 144,
-                      bottom: 0,
-                      right: 0,
-                      zIndex: 1,
-                      opacity: 0.28,
-                      transform: "rotate(12deg)",
-                      transformOrigin: "bottom right",
-                    }}
+                    style={{ width: 144, bottom: 0, right: 0, zIndex: 1, opacity: 0.28, transform: "rotate(12deg)", transformOrigin: "bottom right" }}
                   >
                     <div className="aspect-[2/3]">
                       <img src={items[(activeIdx + 2) % items.length].cover_image!.large!} className="w-full h-full object-cover" alt="" />
@@ -165,15 +199,7 @@ export default function CinematicHero({ bannerItems }: { bannerItems: MediaBase[
                 {items.length > 1 && items[(activeIdx + 1) % items.length]?.cover_image?.large && (
                   <div
                     className="absolute rounded-xl overflow-hidden border border-white/12 shadow-xl transition-all duration-700"
-                    style={{
-                      width: 165,
-                      bottom: 0,
-                      right: 12,
-                      zIndex: 2,
-                      opacity: 0.55,
-                      transform: "rotate(5.5deg)",
-                      transformOrigin: "bottom right",
-                    }}
+                    style={{ width: 165, bottom: 0, right: 12, zIndex: 2, opacity: 0.55, transform: "rotate(5.5deg)", transformOrigin: "bottom right" }}
                   >
                     <div className="aspect-[2/3]">
                       <img src={items[(activeIdx + 1) % items.length].cover_image!.large!} className="w-full h-full object-cover" alt="" />
@@ -194,9 +220,11 @@ export default function CinematicHero({ bannerItems }: { bannerItems: MediaBase[
                       )}
                       <div className="absolute inset-0 bg-gradient-to-t from-dark/90 via-transparent to-transparent" />
 
-                      {/* Posición en el carrusel */}
+                      {/* Posición */}
                       <div className="absolute top-2.5 left-2.5 bg-dark/60 backdrop-blur-sm rounded px-1.5 py-0.5">
-                        <span className="text-[9px] text-white/35 font-mono tabular-nums">{activeIdx + 1}/{items.length}</span>
+                        <span className="text-[9px] text-white/35 font-mono tabular-nums">
+                          {activeIdx + 1}/{items.length}
+                        </span>
                       </div>
 
                       {/* Score */}
@@ -233,10 +261,10 @@ export default function CinematicHero({ bannerItems }: { bannerItems: MediaBase[
                     </div>
                   </div>
 
-                  {/* Dots */}
+                  {/* Dots — máximo 8 visibles para no saturar */}
                   {items.length > 1 && (
                     <div className="flex items-center justify-center gap-1.5 mt-3">
-                      {items.map((_, i) => (
+                      {items.slice(0, 8).map((_, i) => (
                         <button
                           key={i}
                           onClick={() => goTo(i)}
@@ -247,6 +275,9 @@ export default function CinematicHero({ bannerItems }: { bannerItems: MediaBase[
                           }`}
                         />
                       ))}
+                      {items.length > 8 && (
+                        <span className="text-[9px] text-white/20 font-mono ml-1">+{items.length - 8}</span>
+                      )}
                     </div>
                   )}
                 </div>
@@ -256,7 +287,7 @@ export default function CinematicHero({ bannerItems }: { bannerItems: MediaBase[
         </div>
       </div>
 
-      {/* ── Nav arrows (sides) ── */}
+      {/* ── Nav arrows ── */}
       {items.length > 1 && (
         <>
           <button
