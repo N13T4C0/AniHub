@@ -2,33 +2,58 @@ import Link from "next/link";
 import { forumApi } from "@/lib/api";
 import Navbar from "@/components/layout/Navbar";
 import {
-  Tv, BookOpen, Newspaper, Sparkles, FlaskConical, Coffee,
-  MessageSquare, Eye, Pin, ChevronRight, Users, Flame,
+  Clapperboard, BookMarked, Rss, Lightbulb, Gamepad2,
+  MessageCircle, MessageSquare, Eye, Pin,
+  ArrowUpRight, PenSquare, TrendingUp, Hash,
 } from "lucide-react";
 
+// Iconos más específicos mapeados a las claves que vienen del backend
 const ICON_MAP: Record<string, React.ComponentType<{ size?: number; className?: string }>> = {
-  Tv, BookOpen, Newspaper, Sparkles, FlaskConical, Coffee, MessageSquare,
+  Tv:           Clapperboard,   // Anime → claqueta de cine
+  BookOpen:     BookMarked,     // Manga → libro marcado
+  Newspaper:    Rss,            // Noticias → RSS feed
+  Sparkles:     Lightbulb,      // Recomendaciones → bombilla
+  FlaskConical: Gamepad2,       // Off-topic → mando de videojuego
+  Coffee:       MessageCircle,  // Charla → burbuja de chat
+  MessageSquare: MessageSquare, // fallback
 };
 
-const COLOR_MAP: Record<string, string> = {
-  violet:  "from-violet-500/20  to-violet-500/5  border-violet-500/20  text-violet-400",
-  pink:    "from-pink-500/20    to-pink-500/5    border-pink-500/20    text-pink-400",
-  blue:    "from-blue-500/20    to-blue-500/5    border-blue-500/20    text-blue-400",
-  yellow:  "from-yellow-500/20  to-yellow-500/5  border-yellow-500/20  text-yellow-400",
-  emerald: "from-emerald-500/20 to-emerald-500/5 border-emerald-500/20 text-emerald-400",
-  orange:  "from-orange-500/20  to-orange-500/5  border-orange-500/20  text-orange-400",
+// Colores como borde izquierdo + icono, sin gradientes genéricos
+const COLOR_MAP: Record<string, { border: string; icon: string; dot: string }> = {
+  violet:  { border: "border-l-violet-500",  icon: "text-violet-400",  dot: "bg-violet-500" },
+  pink:    { border: "border-l-pink-500",    icon: "text-pink-400",    dot: "bg-pink-500" },
+  blue:    { border: "border-l-sky-500",     icon: "text-sky-400",     dot: "bg-sky-500" },
+  yellow:  { border: "border-l-amber-500",   icon: "text-amber-400",   dot: "bg-amber-500" },
+  emerald: { border: "border-l-emerald-500", icon: "text-emerald-400", dot: "bg-emerald-500" },
+  orange:  { border: "border-l-orange-500",  icon: "text-orange-400",  dot: "bg-orange-500" },
 };
 
 function timeAgo(iso: string) {
   const diff = Date.now() - new Date(iso).getTime();
   const mins = Math.floor(diff / 60000);
-  if (mins < 1)  return "ahora";
-  if (mins < 60) return `hace ${mins}m`;
+  if (mins < 1)  return "justo ahora";
+  if (mins < 60) return `${mins}m`;
   const hrs = Math.floor(mins / 60);
-  if (hrs < 24)  return `hace ${hrs}h`;
+  if (hrs < 24)  return `${hrs}h`;
   const days = Math.floor(hrs / 24);
-  if (days < 7)  return `hace ${days}d`;
+  if (days < 7)  return `${days}d`;
   return new Date(iso).toLocaleDateString("es-ES", { day: "numeric", month: "short" });
+}
+
+// Inicial del usuario para el avatar
+function getInitial(name: string) {
+  return (name ?? "?")[0].toUpperCase();
+}
+
+// Color determinista para el avatar según el nombre
+const AVATAR_COLORS = [
+  "bg-violet-600", "bg-pink-600", "bg-sky-600",
+  "bg-emerald-600", "bg-amber-600", "bg-orange-600",
+];
+function avatarColor(name: string) {
+  let hash = 0;
+  for (const c of name ?? "") hash = (hash * 31 + c.charCodeAt(0)) & 0xff;
+  return AVATAR_COLORS[hash % AVATAR_COLORS.length];
 }
 
 export default async function ForumPage() {
@@ -44,108 +69,169 @@ export default async function ForumPage() {
     <div className="min-h-screen bg-dark">
       <Navbar />
 
-      {/* Hero */}
-      <div className="relative overflow-hidden border-b border-white/5">
-        <div className="absolute inset-0 bg-gradient-to-br from-primary/8 via-transparent to-violet-500/5 pointer-events-none" />
-        <div className="absolute -top-24 left-1/2 -translate-x-1/2 w-[800px] h-[400px] bg-primary/5 rounded-full blur-3xl pointer-events-none" />
-        <div className="max-w-7xl mx-auto px-6 py-12 relative">
-          <div className="flex items-center gap-3 mb-3">
-            <div className="w-10 h-10 rounded-2xl bg-primary/10 border border-primary/20 flex items-center justify-center">
-              <MessageSquare size={18} className="text-primary" />
+      {/* ── Cabecera ── */}
+      <div className="border-b border-white/6">
+        <div className="max-w-7xl mx-auto px-6 pt-10 pb-7 flex items-end justify-between gap-4 flex-wrap">
+          <div>
+            <div className="flex items-center gap-2 mb-2">
+              <Hash size={14} className="text-primary/60" />
+              <span className="text-xs text-white/30 tracking-widest uppercase font-medium">AniHub</span>
             </div>
-            <div>
-              <h1 className="font-display text-3xl font-bold text-white">Foro de AniHub</h1>
-              <p className="text-white/40 text-sm">Debate, recomienda y conecta con la comunidad otaku</p>
-            </div>
+            <h1 className="font-display text-4xl font-black text-white leading-none">Comunidad</h1>
+            <p className="text-white/35 text-sm mt-2 max-w-md">
+              Debates, recomendaciones y charla sobre anime, manga y más.
+            </p>
           </div>
-          <div className="flex items-center gap-6 mt-4">
-            <div className="flex items-center gap-2 text-sm text-white/30">
-              <Users size={13} /> <span>Comunidad activa</span>
-            </div>
-            <div className="flex items-center gap-2 text-sm text-white/30">
-              <Flame size={13} className="text-orange-400" /> <span>Debates en tiempo real</span>
-            </div>
-          </div>
+
+          <Link
+            href="/forum/new"
+            className="inline-flex items-center gap-2 bg-primary hover:bg-primary-600 text-white text-sm font-semibold px-4 py-2.5 rounded-xl transition-colors"
+          >
+            <PenSquare size={14} />
+            Nuevo hilo
+          </Link>
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-6 py-8 grid grid-cols-1 lg:grid-cols-3 gap-8">
+      <div className="max-w-7xl mx-auto px-6 py-8 grid grid-cols-1 lg:grid-cols-3 gap-10">
 
-        {/* Categories — left 2/3 */}
-        <div className="lg:col-span-2 space-y-3">
-          <h2 className="font-display text-lg font-semibold text-white mb-4">Categorías</h2>
-          {cats.map((cat) => {
-            const Icon = ICON_MAP[cat.icon ?? "MessageSquare"] ?? MessageSquare;
-            const colorCls = COLOR_MAP[cat.color ?? "violet"] ?? COLOR_MAP.violet;
-            const [fromCls, , borderCls, textCls] = colorCls.split("  ");
-            return (
-              <Link
-                key={cat.slug}
-                href={`/forum/${cat.slug}`}
-                className={`flex items-center gap-4 bg-gradient-to-r ${fromCls} border ${borderCls} rounded-2xl px-5 py-4 hover:brightness-110 transition-all group`}
-              >
-                <div className={`w-10 h-10 rounded-xl bg-dark/40 flex items-center justify-center flex-shrink-0 ${textCls}`}>
-                  <Icon size={18} />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="font-semibold text-white group-hover:text-white/90">{cat.name}</p>
-                  <p className="text-xs text-white/40 truncate mt-0.5">{cat.description}</p>
-                </div>
-                <div className="flex items-center gap-4 flex-shrink-0">
-                  <div className="text-center hidden sm:block">
-                    <p className="text-sm font-bold text-white/70">{cat.thread_count}</p>
-                    <p className="text-[10px] text-white/30">hilos</p>
+        {/* ── Categorías — 2/3 izquierda ── */}
+        <div className="lg:col-span-2">
+          <div className="flex items-center gap-2 mb-5">
+            <TrendingUp size={14} className="text-white/30" />
+            <span className="text-xs text-white/30 uppercase tracking-widest font-medium">Secciones</span>
+          </div>
+
+          <div className="space-y-1">
+            {cats.map((cat, idx) => {
+              const Icon = ICON_MAP[cat.icon ?? "MessageSquare"] ?? MessageSquare;
+              const colors = COLOR_MAP[cat.color ?? "violet"] ?? COLOR_MAP.violet;
+
+              return (
+                <Link
+                  key={cat.slug}
+                  href={`/forum/${cat.slug}`}
+                  className={`group flex items-center gap-4 bg-dark-100 hover:bg-dark-200 border-l-2 ${colors.border} border-t border-r border-b border-white/0 hover:border-white/6 rounded-r-xl px-5 py-4 transition-all duration-150`}
+                >
+                  {/* Número de sección */}
+                  <span className="text-[11px] text-white/15 font-mono w-4 flex-shrink-0 tabular-nums">
+                    {String(idx + 1).padStart(2, "0")}
+                  </span>
+
+                  {/* Icono */}
+                  <div className={`flex-shrink-0 ${colors.icon}`}>
+                    <Icon size={20} />
                   </div>
-                  <ChevronRight size={16} className="text-white/20 group-hover:text-white/50 transition-colors" />
-                </div>
-              </Link>
-            );
-          })}
 
-          {/* Create thread CTA */}
-          <Link
-            href="/forum/new"
-            className="flex items-center justify-center gap-2 w-full border border-dashed border-primary/30 hover:border-primary/60 rounded-2xl py-4 text-primary/60 hover:text-primary transition-all text-sm font-medium mt-2"
-          >
-            + Crear nuevo hilo
-          </Link>
+                  {/* Texto */}
+                  <div className="flex-1 min-w-0">
+                    <p className="font-semibold text-white/85 group-hover:text-white text-sm transition-colors">
+                      {cat.name}
+                    </p>
+                    <p className="text-xs text-white/30 truncate mt-0.5 leading-relaxed">
+                      {cat.description}
+                    </p>
+                  </div>
+
+                  {/* Stats */}
+                  <div className="flex-shrink-0 flex items-center gap-3 text-right">
+                    <div className="hidden sm:block">
+                      <p className="text-sm font-bold text-white/60 tabular-nums">{cat.thread_count ?? 0}</p>
+                      <p className="text-[10px] text-white/20">hilos</p>
+                    </div>
+                    <ArrowUpRight
+                      size={15}
+                      className="text-white/10 group-hover:text-white/40 transition-colors"
+                    />
+                  </div>
+                </Link>
+              );
+            })}
+          </div>
+
+          {cats.length === 0 && (
+            <p className="text-white/25 text-sm py-8 text-center">Cargando secciones…</p>
+          )}
         </div>
 
-        {/* Recent activity — right 1/3 */}
-        <div className="space-y-4">
-          <h2 className="font-display text-lg font-semibold text-white">Actividad reciente</h2>
+        {/* ── Actividad reciente — 1/3 derecha ── */}
+        <div>
+          <div className="flex items-center gap-2 mb-5">
+            <span className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse" />
+            <span className="text-xs text-white/30 uppercase tracking-widest font-medium">Últimos hilos</span>
+          </div>
+
           {recent.length === 0 && (
-            <p className="text-white/30 text-sm">Sin actividad aún. ¡Sé el primero!</p>
+            <p className="text-white/25 text-sm py-4">
+              Aún no hay hilos. ¡Abre el primero!
+            </p>
           )}
-          {recent.map((t) => (
-            <Link
-              key={t.id}
-              href={`/forum/thread/${t.id}`}
-              className="block bg-dark-100 border border-white/5 hover:border-white/15 rounded-xl p-4 transition-all group"
-            >
-              {t.media_cover && (
-                <div className="flex items-center gap-2 mb-2">
-                  <img src={t.media_cover} alt={t.media_title ?? ""} className="w-6 h-8 rounded object-cover" />
-                  <span className="text-[10px] text-white/30 truncate">{t.media_title}</span>
+
+          <div className="space-y-px">
+            {recent.map((t) => (
+              <Link
+                key={t.id}
+                href={`/forum/thread/${t.id}`}
+                className="group flex items-start gap-3 px-3 py-3.5 rounded-xl hover:bg-white/[0.03] transition-colors"
+              >
+                {/* Avatar de usuario */}
+                <div
+                  className={`w-7 h-7 rounded-full flex-shrink-0 flex items-center justify-center text-[11px] font-bold text-white/90 mt-0.5 ${avatarColor(t.username ?? "")}`}
+                >
+                  {getInitial(t.username ?? "?")}
                 </div>
-              )}
-              <p className="text-sm font-medium text-white/80 group-hover:text-white line-clamp-2 leading-snug">
-                {t.is_pinned && <Pin size={10} className="inline text-primary mr-1" />}
-                {t.title}
-              </p>
-              <div className="flex items-center gap-3 mt-2 text-[11px] text-white/30">
-                <span className="text-primary/70">{t.category_name}</span>
-                <span>·</span>
-                <span>{t.username}</span>
-                <span>·</span>
-                <span>{timeAgo(t.updated_at)}</span>
-              </div>
-              <div className="flex items-center gap-3 mt-1.5 text-[11px] text-white/20">
-                <span className="flex items-center gap-1"><MessageSquare size={10} />{t.reply_count}</span>
-                <span className="flex items-center gap-1"><Eye size={10} />{t.views}</span>
-              </div>
+
+                <div className="flex-1 min-w-0">
+                  {/* Categoría + tiempo */}
+                  <div className="flex items-center gap-1.5 mb-1">
+                    <span className="text-[10px] text-primary/60 font-medium truncate">{t.category_name}</span>
+                    <span className="text-white/15">·</span>
+                    <span className="text-[10px] text-white/25 flex-shrink-0">{timeAgo(t.updated_at)}</span>
+                  </div>
+
+                  {/* Título */}
+                  <p className="text-sm text-white/70 group-hover:text-white/90 line-clamp-2 leading-snug transition-colors">
+                    {t.is_pinned && (
+                      <Pin size={9} className="inline text-primary/50 mr-1 mb-0.5" />
+                    )}
+                    {t.title}
+                  </p>
+
+                  {/* Autor + stats */}
+                  <div className="flex items-center gap-2 mt-1.5 text-[10px] text-white/20">
+                    <span>{t.username}</span>
+                    <span className="flex items-center gap-0.5">
+                      <MessageSquare size={9} />
+                      {t.reply_count}
+                    </span>
+                    <span className="flex items-center gap-0.5">
+                      <Eye size={9} />
+                      {t.views}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Cover del media si existe */}
+                {t.media_cover && (
+                  <img
+                    src={t.media_cover}
+                    alt={t.media_title ?? ""}
+                    className="w-8 h-11 rounded object-cover flex-shrink-0 opacity-60 group-hover:opacity-90 transition-opacity mt-0.5"
+                  />
+                )}
+              </Link>
+            ))}
+          </div>
+
+          {recent.length > 0 && (
+            <Link
+              href="/forum"
+              className="flex items-center gap-1.5 mt-4 text-xs text-white/20 hover:text-white/50 transition-colors px-3"
+            >
+              Ver todos los hilos
+              <ArrowUpRight size={11} />
             </Link>
-          ))}
+          )}
         </div>
       </div>
     </div>

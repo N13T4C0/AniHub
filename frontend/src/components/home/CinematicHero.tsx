@@ -123,80 +123,133 @@ export default function CinematicHero({ bannerItems }: { bannerItems: MediaBase[
             </div>
           </div>
 
-          {/* Right: Featured anime card */}
+          {/* Right: Stacked anime cards */}
           {current && (
-            <div className="lg:col-span-2 flex justify-end">
-              <div className="group relative w-52 lg:w-64">
-                {/* Glow behind card */}
+            <div className="lg:col-span-2 flex items-end justify-center lg:justify-end">
+              <div className="relative" style={{ width: 260, height: 370 }}>
+
+                {/* Glow ambiental */}
                 {current.cover_image?.color && (
                   <div
-                    className="absolute -inset-4 rounded-3xl opacity-40 blur-2xl transition-opacity duration-700"
-                    style={{ background: current.cover_image.color }}
+                    className="absolute pointer-events-none opacity-20 blur-3xl transition-all duration-700"
+                    style={{
+                      background: current.cover_image.color,
+                      inset: 0,
+                      borderRadius: 32,
+                      transform: "scale(0.8) translateY(12%)",
+                    }}
                   />
                 )}
-                <div className="relative bg-dark/40 backdrop-blur-sm rounded-2xl border border-white/10 overflow-hidden shadow-2xl">
-                  {/* Cover image */}
-                  <div className="aspect-[2/3] relative overflow-hidden">
-                    {(current.cover_image?.large || current.cover_image?.extra_large) && (
-                      <img
-                        src={current.cover_image.extra_large || current.cover_image.large!}
-                        alt={getTitle(current.title)}
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
-                      />
-                    )}
-                    <div className="absolute inset-0 bg-gradient-to-t from-dark/90 via-transparent to-transparent" />
 
-                    {/* Score */}
-                    {current.average_score && (
-                      <div className="absolute top-3 right-3 flex items-center gap-1 bg-dark/70 backdrop-blur-sm rounded-lg px-2 py-1">
-                        <Star size={11} className="text-yellow-400" fill="currentColor" />
-                        <span className="text-sm font-bold text-yellow-400">
-                          {(current.average_score / 10).toFixed(1)}
-                        </span>
-                      </div>
-                    )}
-
-                    {/* Play button */}
-                    <Link
-                      href={`/media/${current.id}?type=ANIME`}
-                      className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300"
-                    >
-                      <div className="w-14 h-14 rounded-full bg-white/20 backdrop-blur-sm border border-white/30 flex items-center justify-center">
-                        <Play size={22} className="text-white ml-1" fill="white" />
-                      </div>
-                    </Link>
-                  </div>
-
-                  {/* Info */}
-                  <div className="p-4">
-                    <p className="text-[10px] text-white/40 uppercase tracking-widest mb-1">Ahora trending</p>
-                    <h3 className="font-display font-bold text-white text-base leading-tight line-clamp-2 mb-2">
-                      {getTitle(current.title)}
-                    </h3>
-                    <div className="flex flex-wrap gap-1">
-                      {current.genres?.slice(0, 3).map((g) => (
-                        <span key={g} className="text-[10px] bg-white/8 border border-white/10 text-white/50 rounded-full px-2 py-0.5">{g}</span>
-                      ))}
+                {/* Carta trasera — más rotada, casi invisible */}
+                {items.length > 2 && items[(activeIdx + 2) % items.length]?.cover_image?.large && (
+                  <div
+                    className="absolute rounded-xl overflow-hidden border border-white/8 shadow-lg transition-all duration-700"
+                    style={{
+                      width: 144,
+                      bottom: 0,
+                      right: 0,
+                      zIndex: 1,
+                      opacity: 0.28,
+                      transform: "rotate(12deg)",
+                      transformOrigin: "bottom right",
+                    }}
+                  >
+                    <div className="aspect-[2/3]">
+                      <img src={items[(activeIdx + 2) % items.length].cover_image!.large!} className="w-full h-full object-cover" alt="" />
                     </div>
                   </div>
-                </div>
+                )}
 
-                {/* Dots below card */}
-                {items.length > 1 && (
-                  <div className="flex items-center justify-center gap-2 mt-4">
-                    {items.map((_, i) => (
-                      <button
-                        key={i}
-                        onClick={() => goTo(i)}
-                        className={`rounded-full transition-all duration-300 ${
-                          i === activeIdx
-                            ? "w-5 h-1.5 bg-primary"
-                            : "w-1.5 h-1.5 bg-white/25 hover:bg-white/50"
-                        }`}
-                      />
-                    ))}
+                {/* Carta media */}
+                {items.length > 1 && items[(activeIdx + 1) % items.length]?.cover_image?.large && (
+                  <div
+                    className="absolute rounded-xl overflow-hidden border border-white/12 shadow-xl transition-all duration-700"
+                    style={{
+                      width: 165,
+                      bottom: 0,
+                      right: 12,
+                      zIndex: 2,
+                      opacity: 0.55,
+                      transform: "rotate(5.5deg)",
+                      transformOrigin: "bottom right",
+                    }}
+                  >
+                    <div className="aspect-[2/3]">
+                      <img src={items[(activeIdx + 1) % items.length].cover_image!.large!} className="w-full h-full object-cover" alt="" />
+                    </div>
                   </div>
                 )}
+
+                {/* Carta frontal — activa */}
+                <div className="group absolute" style={{ width: 192, bottom: 0, left: 0, zIndex: 3 }}>
+                  <div className="bg-dark/40 backdrop-blur-sm rounded-2xl border border-white/15 overflow-hidden shadow-2xl">
+                    <div className="aspect-[2/3] relative overflow-hidden">
+                      {(current.cover_image?.large || current.cover_image?.extra_large) && (
+                        <img
+                          src={current.cover_image.extra_large || current.cover_image.large!}
+                          alt={getTitle(current.title)}
+                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
+                        />
+                      )}
+                      <div className="absolute inset-0 bg-gradient-to-t from-dark/90 via-transparent to-transparent" />
+
+                      {/* Posición en el carrusel */}
+                      <div className="absolute top-2.5 left-2.5 bg-dark/60 backdrop-blur-sm rounded px-1.5 py-0.5">
+                        <span className="text-[9px] text-white/35 font-mono tabular-nums">{activeIdx + 1}/{items.length}</span>
+                      </div>
+
+                      {/* Score */}
+                      {current.average_score && (
+                        <div className="absolute top-2.5 right-2.5 flex items-center gap-0.5 bg-dark/70 backdrop-blur-sm rounded px-1.5 py-0.5">
+                          <Star size={10} className="text-yellow-400" fill="currentColor" />
+                          <span className="text-xs font-bold text-yellow-400">
+                            {(current.average_score / 10).toFixed(1)}
+                          </span>
+                        </div>
+                      )}
+
+                      {/* Play overlay */}
+                      <Link
+                        href={`/media/${current.id}?type=ANIME`}
+                        className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+                      >
+                        <div className="w-11 h-11 rounded-full bg-white/20 backdrop-blur-sm border border-white/30 flex items-center justify-center">
+                          <Play size={16} className="text-white ml-0.5" fill="white" />
+                        </div>
+                      </Link>
+                    </div>
+
+                    <div className="p-3">
+                      <p className="text-[9px] text-primary/60 uppercase tracking-widest font-semibold mb-1">Trending</p>
+                      <h3 className="font-display font-bold text-white text-sm leading-snug line-clamp-2 mb-1.5">
+                        {getTitle(current.title)}
+                      </h3>
+                      <div className="flex flex-wrap gap-1">
+                        {current.genres?.slice(0, 3).map((g) => (
+                          <span key={g} className="text-[9px] bg-white/5 border border-white/8 text-white/40 rounded-full px-1.5 py-0.5">{g}</span>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Dots */}
+                  {items.length > 1 && (
+                    <div className="flex items-center justify-center gap-1.5 mt-3">
+                      {items.map((_, i) => (
+                        <button
+                          key={i}
+                          onClick={() => goTo(i)}
+                          className={`rounded-full transition-all duration-300 ${
+                            i === activeIdx
+                              ? "w-4 h-[3px] bg-primary"
+                              : "w-[3px] h-[3px] bg-white/20 hover:bg-white/40"
+                          }`}
+                        />
+                      ))}
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
           )}
